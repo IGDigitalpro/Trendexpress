@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Trend Express</title>
+  <link href="https://fonts.googleapis.com/css?family=Inter:600,500,400&display=swap" rel="stylesheet">
+  <style>
+    body { background: linear-gradient(120deg, #f6f6fa 0%, #fbeee6 100%); font-family: 'Inter', Arial, sans-serif; margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .card { background: #fff; border-radius: 22px; box-shadow: 0 8px 42px #ff980029, 0 2px 8px #ff572211; width: 95%; max-width: 400px; padding: 2rem; text-align: center; }
+    h1 { color: #ff5722; margin-bottom: 1.5rem; }
+    input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
+    button { width: 100%; background: linear-gradient(90deg, #ff9800 0%, #ff5722 100%); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    .alert { color: #ff5722; font-size: 0.9em; margin-top: 10px; display: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>trend express</h1>
+    <p>Insira os seus dados para entrar ou registar</p>
+    <input type="text" id="nome" placeholder="Nome Completo (apenas para registo)">
+    <input type="text" id="phone" placeholder="WhatsApp (ex: 84xxxxxxx)" required>
+    <input type="password" id="senha" placeholder="Senha de Acesso" required>
+    <button id="login-btn">Entrar / Criar Conta</button>
+    <div class="alert" id="alert"></div>
+  </div>
+
+  <script>
+    // A sua URL real do MockAPI configurada
+    const API_BASE = "https://6a2545035447714a6f834dde.mockapi.io/API/v1";
+
+    document.getElementById('login-btn').addEventListener('click', async () => {
+      const nome = document.getElementById('nome').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const senha = document.getElementById('senha').value.trim();
+
+      if(!phone || !senha) {
+        showAlert("Por favor, preencha o WhatsApp e a Senha.");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/usuarios`);
+        const usuarios = await res.json();
+        const usuarioExistente = usuarios.find(u => u.phone === phone);
+
+        if(usuarioExistente) {
+          if(usuarioExistente.senha === senha) {
+            sessionStorage.setItem('usuario_logado', JSON.stringify(usuarioExistente));
+            window.location.href = "home.html";
+          } else { 
+            showAlert("Senha incorreta para este número!"); 
+          }
+        } else {
+          if(!nome) {
+            showAlert("Número novo detetado! Digite o seu Nome Completo para criar a sua conta.");
+            return;
+          }
+          const novoUsuario = { nome, phone, senha };
+          const saveRes = await fetch(`${API_BASE}/usuarios`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(novoUsuario)
+          });
+          if(saveRes.ok) {
+            const userCriado = await saveRes.json();
+            sessionStorage.setItem('usuario_logado', JSON.stringify(userCriado));
+            window.location.href = "home.html";
+          }
+        }
+      } catch (err) { 
+        showAlert("Erro de ligação com o back-end."); 
+      }
+    });
+
+    function showAlert(msg) {
+      const alertDiv = document.getElementById('alert');
+      alertDiv.textContent = msg;
+      alertDiv.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
