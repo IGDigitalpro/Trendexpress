@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Carregar Produto - trend express</title>
+  <link href="https://fonts.googleapis.com/css?family=Inter:600,500,400&display=swap" rel="stylesheet">
+  <style>
+    body { background: linear-gradient(120deg, #f6f6fa 0%, #fbeee6 100%); font-family: 'Inter', Arial, sans-serif; margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+    .nav-bar { width: 100vw; max-width: 1080px; background: linear-gradient(90deg,#ff5722 0%,#ff9800 100%); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: .7em 1em; border-radius: 0 0 16px 16px; box-shadow: 0 2px 18px #ff98001c; margin-bottom: 1.2em; font-weight: 700; box-sizing: border-box;}
+    .main-card { background: #fff; border-radius: 22px; box-shadow: 0 8px 42px #ff980029, 0 2px 8px #ff572211; max-width: 600px; width: 98vw; margin: 0 auto 2em auto; padding: 1.5em 1.2em; display: flex; flex-direction: column; align-items: center; box-sizing: border-box;}
+    h1 { color: #ff5722; font-size: 1.25em; margin-bottom: 1.4em; font-weight: 800; }
+    form { width: 100%; display: flex; flex-direction: column; gap: 1.13em; align-items: center; margin-bottom: 2.3em; }
+    label { color: #ff9800; font-weight: 700; }
+    input, select { font-family: inherit; font-size: 1em; border-radius: 9px; border: 1px solid #ff98004c; padding: .55em 1em; width: 95%; max-width: 325px; box-sizing: border-box; }
+    .img-preview { margin: .4em 0 .7em 0; width: 80px; height: 80px; border-radius: 8px; object-fit: cover; display: none; }
+    button { background: linear-gradient(90deg,#ff9800 0%,#ff5722 100%); color: #fff; border: none; border-radius: 8px; padding: .5em 1.5em; font-weight: 700; cursor: pointer; }
+    .prod-list { width: 100%; display: flex; flex-direction: column; gap: 1.07em; }
+    .prod-card { background: #fff7e6; border-radius: 13px; display: flex; align-items: center; gap: 1em; padding: .7em; box-sizing: border-box; }
+    .prod-card img { width: 55px; height: 55px; border-radius: 9px; object-fit: cover; }
+    .prod-info { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .remove-btn { background: #ff5722; color: #fff; border: none; border-radius: 6px; padding: .45em 1.2em; font-weight: 700; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="nav-bar">
+    <span style="font-weight:900;">trend express</span>
+    <a href="home.html" style="color:#fff;text-decoration:none;">Início</a>
+  </div>
+  <div class="main-card">
+    <h1>Adicionar Produto</h1>
+    <form id="prodForm">
+      <div>
+        <label>Imagem:</label>
+        <input type="file" accept="image/*" id="imgInput">
+        <img class="img-preview" id="imgPreview"/>
+      </div>
+      <div>
+        <label>Descrição:</label>
+        <input type="text" id="descInput" maxlength="60" required>
+      </div>
+      <div>
+        <label>Categoria:</label>
+        <select id="catInput" required>
+          <option value="">Selecione</option>
+          <option>Roupa</option><option>Eletrônicos</option><option>Calçados</option><option>Outros</option>
+        </select>
+      </div>
+      <div>
+        <label>Preço (MZN):</label>
+        <input type="number" id="priceInput" required>
+      </div>
+      <button type="submit">Adicionar e Pagar Taxa</button>
+    </form>
+    <h1>Os Seus Anúncios Submetidos</h1>
+    <div class="prod-list" id="prodList"></div>
+  </div>
+
+  <script>
+    const API_BASE = "https://6a2545035447714a6f834dde.mockapi.io/API/v1";
+    
+    const userLogado = JSON.parse(sessionStorage.getItem('usuario_logado'));
+    if(!userLogado) { window.location.href = "index.html"; }
+
+    const imgInput = document.getElementById('imgInput');
+    const imgPreview = document.getElementById('imgPreview');
+    
+    imgInput.onchange = function() {
+      if(this.files && this.files[0]){
+        const reader = new FileReader();
+        reader.onload = e => { imgPreview.src = e.target.result; imgPreview.style.display = "block"; };
+        reader.readAsDataURL(this.files[0]);
+      }
+    };
+
+    document.getElementById('prodForm').onsubmit = async function(e){
+      e.preventDefault();
+      const desc = document.getElementById('descInput').value.trim();
+      const cat = document.getElementById('catInput').value.trim();
+      const price = document.getElementById('priceInput').value.trim();
+      
+      let img = "https://cdn-icons-png.flaticon.com/512/685/685352.png";
+      if(imgInput.files && imgInput.files[0]){
+        img = await new Promise(res=>{
+          const r = new FileReader(); r.onload = e=>res(e.target.result); r.readAsDataURL(imgInput.files[0]);
+        });
+      }
+
+      const dadosProduto = {
+        img, desc, categoria: cat, price, 
+        phone: userLogado.phone, 
+        usuarioNome: userLogado.nome,
+        aprovado: false
+      };
+
+      try {
+        const response = await fetch(`${API_BASE}/produtos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dadosProduto)
+        });
+
+        if(response.ok) {
+          this.reset();
+          imgPreview.style.display = "none";
+          renderProdutosDoServidor();
+          
+          const msgWhats = encodeURIComponent(`Olá Admin! Acabei de carregar o produto "${desc}" por ${price} MZN na Trend Express. Quero pagar a taxa de 20MT para ativar.`);
+          window.open(`https://wa.me/258846698250?text=${msgWhats}`, '_blank');
+        }
+      } catch (error) { alert("Erro ao salvar no servidor central."); }
+    };
+
+    async function renderProdutosDoServidor() {
+      try {
+        const response = await fetch(`${API_BASE}/produtos`);
+        const produtos = await response.json();
+        const list = document.getElementById('prodList');
+        list.innerHTML = "";
+        
+        const meusProdutos = produtos.filter(p => p.phone === userLogado.phone);
+
+        if(meusProdutos.length === 0) {
+          list.innerHTML = "<div style='text-align:center;color:#888;'>Não tem nenhum produto submetido.</div>";
+          return;
+        }
+
+        meusProdutos.reverse().forEach(p => {
+          const card = document.createElement('div');
+          card.className = 'prod-card';
+          const statusHTML = p.aprovado === true || p.aprovado === "true"
+            ? `<span style="color:green;font-weight:bold;">Ativo (Na Vitrine)</span>` 
+            : `<span style="color:red;font-weight:bold;">Pendente (Aguardando 20MT)</span>`;
+          
+          card.innerHTML = `
+            <img src="${p.img}">
+            <div class="prod-info">
+              <div><b>${p.desc}</b></div>
+              <div style="color:#43a047;font-weight:bold;">${p.price} MZN</div>
+              <div>Status: ${statusHTML}</div>
+            </div>
+            <button class="remove-btn" onclick="deletarProduto('${p.id}')">Remover</button>
+          `;
+          list.appendChild(card);
+        });
+      } catch (error) { console.error(error); }
+    }
+
+    async function deletarProduto(id) {
+      if(confirm("Deseja eliminar do servidor global?")) {
+        await fetch(`${API_BASE}/produtos/${id}`, { method: 'DELETE' });
+        renderProdutosDoServidor();
+      }
+    }
+
+    renderProdutosDoServidor();
+  </script>
+</body>
+</html>
