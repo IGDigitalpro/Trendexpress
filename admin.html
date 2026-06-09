@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Painel Admin - trend express</title>
+  <link href="https://fonts.googleapis.com/css?family=Inter:600,500,400&display=swap" rel="stylesheet">
+  <style>
+    body { 
+      background: linear-gradient(120deg, #f6f6fa 0%, #fbeee6 100%); 
+      font-family: 'Inter', sans-serif; 
+      margin: 0; 
+      padding-bottom: 90px; /* Garante que a barra inferior não cubra as ações */
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+    }
+
+    /* Top Bar */
+    .top-bar { 
+      width: 100vw; 
+      max-width: 1080px; 
+      background: #fff; 
+      color: #333; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      padding: 1em; 
+      box-sizing: border-box;
+      border-bottom: 1px solid #eee;
+    }
+    .top-bar .logo {
+      font-weight: 900;
+      font-size: 1.3em;
+      background: linear-gradient(90deg,#ff5722 0%,#ff9800 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .top-bar .badge {
+      background: #ff5722;
+      color: #fff;
+      padding: .3em .7em;
+      border-radius: 20px;
+      font-size: .8em;
+      font-weight: bold;
+    }
+
+    /* Área do PIN Oculta e Discreta */
+    .pin-card { 
+      background: #fff; 
+      padding: 2.5rem 2rem; 
+      border-radius: 22px; 
+      box-shadow: 0 8px 42px rgba(255, 87, 34, 0.15); 
+      margin-top: 15vh; 
+      text-align: center; 
+      max-width: 360px;
+      width: 90vw;
+      box-sizing: border-box;
+    }
+    .pin-card h2 { color: #ff5722; margin-top: 0; font-size: 1.4em; }
+    .pin-card input { 
+      width: 100%; 
+      padding: 12px; 
+      text-align: center; 
+      font-size: 1.2em; 
+      letter-spacing: 4px;
+      border-radius: 8px; 
+      border: 1px solid #ddd; 
+      box-sizing: border-box;
+      margin-bottom: 1.2em;
+    }
+    .pin-card button { 
+      width: 100%;
+      padding: 12px; 
+      background: linear-gradient(90deg, #ff9800 0%, #ff5722 100%); 
+      color: white; 
+      border: none; 
+      border-radius: 8px; 
+      font-weight: bold; 
+      font-size: 1em;
+      cursor: pointer; 
+    }
+
+    /* Painel Principal */
+    .main-card { 
+      max-width: 1080px; 
+      width: 95vw; 
+      margin: 1.5em auto; 
+      box-sizing: border-box;
+    }
+    .main-card h1 {
+      color: #ff5722;
+      font-size: 1.4em;
+      margin-bottom: 1em;
+      text-align: center;
+    }
+
+    /* Lista Administrativa em Cards Móveis */
+    .admin-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1em;
+      width: 100%;
+    }
+    
+    .admin-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 1em;
+      display: flex;
+      align-items: center;
+      gap: 1em;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.02);
+      border: 1px solid #f0f0f0;
+      box-sizing: border-box;
+    }
+
+    .admin-card img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 12px;
+      background: #f9f9f9;
+    }
+
+    .admin-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: .2em;
+      font-size: .9em;
+      color: #555;
+      min-width: 0;
+    }
+    .admin-info .title {
+      font-weight: 700;
+      color: #222;
+      font-size: 1em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .admin-info .price {
+      color: #43a047;
+      font-weight: 800;
+    }
+    .admin-info .seller {
+      font-size: 0.85em;
+      color: #888;
+    }
+
+    /* Status Badges */
+    .status-badge {
+      display: inline-block;
+      padding: .2em .6em;
+      border-radius: 6px;
+      font-size: .75em;
+      font-weight: bold;
+      width: fit-content;
+    }
+    .status-badge.pending { background: #fff3e0; color: #ff9800; }
+    .status-badge.active { background: #e8f5e9; color: #2e7d32; }
+
+    /* Botões de Ação */
+    .admin-actions {
+      display: flex;
+      flex-direction: column;
+      gap: .5em;
+    }
+    .approve-btn { 
+      background: #2e7d32; 
+      color: white; 
+      border: none; 
+      padding: .6em 1em; 
+      cursor: pointer; 
+      border-radius: 8px; 
+      font-weight: bold; 
+      font-size: .85em;
+    }
+    .remove-btn { 
+      background: #ff5722; 
+      color: white; 
+      border: none; 
+      padding: .6em 1em; 
+      cursor: pointer; 
+      border-radius: 8px; 
+      font-weight: bold; 
+      font-size: .85em;
+    }
+
+    /* BARRA DE NAVEGAÇÃO INFERIOR */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 65px;
+      background-color: #ffffff;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 999;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #888;
+      text-decoration: none;
+      font-size: 0.75em;
+      font-weight: 500;
+      width: 20%;
+      height: 100%;
+      transition: color 0.2s;
+    }
+    
+    .nav-item svg {
+      width: 22px;
+      height: 22px;
+      margin-bottom: 3px;
+      fill: currentColor;
+    }
+    
+    .nav-item.active {
+      color: #ff5722;
+    }
+    
+    .nav-item.add-btn {
+      position: relative;
+      top: -12px;
+      background: linear-gradient(135deg, #ff9800 0%, #ff5722 100%);
+      color: #fff !important;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      box-shadow: 0 4px 15px rgba(255, 87, 34, 0.4);
+    }
+    .nav-item.add-btn svg {
+      width: 26px;
+      height: 26px;
+      margin-bottom: 0;
+    }
+
+    @media (max-width: 480px) {
+      .admin-card {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .admin-card img {
+        width: 100%;
+        height: 140px;
+      }
+      .admin-actions {
+        width: 100%;
+        flex-direction: row;
+      }
+      .admin-actions button {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="pinArea" class="pin-card">
+    <div style="background: #fff5e0; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1em auto;">
+      <svg viewBox="0 0 24 24" style="width: 28px; height: 28px; fill: #ff5722;">
+        <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+      </svg>
+    </div>
+    <h2>Acesso Restrito</h2>
+    <p style="color:#666; font-size:.85em; margin-bottom:1.5em;">Introduza o código de segurança para gerir a plataforma.</p>
+    <input type="password" id="pinInput" placeholder="••••••" maxlength="6" autocomplete="off">
+    <button onclick="verificarPIN()">Desbloquear Painel</button>
+  </div>
+
+  <div id="adminPanel" style="display:none; width: 100%;">
+    <div class="top-bar">
+      <span class="logo">trend express</span>
+      <span class="badge">Modo Admin</span>
+    </div>
+
+    <div class="main-card">
+      <h1>Gestor Global de Anúncios</h1>
+      <div class="admin-list" id="adminList"></div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="home.html" class="nav-item">
+      <svg viewBox="0 0 24 24">
+        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+      </svg>
+      <span>Início</span>
+    </a>
+
+    <a href="products.html" class="nav-item add-btn" title="Vender Novo Produto">
+      <svg viewBox="0 0 24 24">
+        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+      </svg>
+    </a>
+
+    <a href="admin.html" class="nav-item active">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-4-8-4z"/>
+      </svg>
+      <span>Admin</span>
+    </a>
+
+    <a href="index.html" onclick="sessionStorage.clear()" class="nav-item">
+      <svg viewBox="0 0 24 24">
+        <path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L13.17 11H3v2h10.17zM19 3H5c-1.1 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
+      </svg>
+      <span>Sair</span>
+    </a>
+  </nav>
+
+  <script>
+    const API_BASE = "https://6a2545035447714a6f834dde.mockapi.io/API/v1";
+
+    function verificarPIN() {
+      const pinDigitado = document.getElementById('pinInput').value;
+      
+      if(btoa(pinDigitado) === "MTAxOTgy") {
+        document.getElementById('pinArea').style.display = "none";
+        document.getElementById('adminPanel').style.display = "block";
+        carregarTudoDoServidor();
+      } else { 
+        alert("PIN Incorreto! Acesso negado."); 
+      }
+    }
+
+    async function carregarTudoDoServidor() {
+      const container = document.getElementById('adminList');
+      container.innerHTML = "<p style='text-align:center; color:#888;'>A obter dados da nuvem...</p>";
+
+      try {
+        const response = await fetch(`${API_BASE}/produtos`);
+        const produtos = await response.json();
+        container.innerHTML = "";
+
+        if(!produtos || produtos.length === 0) {
+          container.innerHTML = "<p style='text-align:center;color:#888;margin-top:2em;'>Nenhum anúncio registado no servidor central.</p>";
+          return;
+        }
+
+        produtos.reverse().forEach(p => {
+          const card = document.createElement('div');
+          card.className = 'admin-card';
+          
+          const isAprovado = p.aprovado === true || p.aprovado === "true";
+          const badgeHTML = isAprovado 
+            ? `<span class="status-badge active">Ativo (Na Loja)</span>` 
+            : `<span class="status-badge pending">Pendente (20MT)</span>`;
+          
+          const btnAprovar = !isAprovado 
+            ? `<button class="approve-btn" onclick="autorizarAnuncio('${p.id}')">Aprovar</button>` 
+            : "";
+
+          card.innerHTML = `
+            <img src="${p.img}">
+            <div class="admin-info">
+              <div class="title">${p.desc}</div>
+              <div class="price">${Number(p.price).toLocaleString('pt-MZ')} MZN</div>
+              <div class="seller">Vendedor: <b>${p.usuarioNome || 'Desconhecido'}</b></div>
+              <div class="seller">Contactar: <a href="https://wa.me/${p.phone}" target="_blank" style="color:#ff5722; text-decoration:none; font-weight:bold;">${p.phone}</a></div>
+              <div style="margin-top:4px;">${badgeHTML}</div>
+            </div>
+            <div class="admin-actions">
+              ${btnAprovar}
+              <button class="remove-btn" onclick="deletarNoServidor('${p.id}')">Eliminar</button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      } catch (error) { 
+        container.innerHTML = "<p style='text-align:center;color:red;'>Erro ao ligar ao servidor global.</p>"; 
+      }
+    }
+
+    async function autorizarAnuncio(id) {
+      if(confirm("Confirmar a ativação do anúncio após verificar o recebimento da taxa de 20MT via carteira móvel?")) {
+        try {
+          await fetch(`${API_BASE}/produtos/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ aprovado: true })
+          });
+          carregarTudoDoServidor();
+        } catch (e) { alert("Erro ao atualizar."); }
+      }
+    }
+
+    async function deletarNoServidor(id) {
+      if(confirm("Eliminar este anúncio definitivamente da base de dados global?")) {
+        try {
+          await fetch(`${API_BASE}/produtos/${id}`, { method: 'DELETE' });
+          carregarTudoDoServidor();
+        } catch (e) { alert("Erro ao eliminar."); }
+      }
+    }
+  </script>
+</body>
+</html>
